@@ -9,7 +9,8 @@ let tossAndTurnData = 0;
 let oldValue = 0;
 let alpha = 0.75; 
 let period = 100; //측정 주기.
-
+let heartbeatCount = 0;
+let max = 0;
 
 const gpio = require('wiring-pi')
 const mcpadc = require('mcp-adc')
@@ -19,6 +20,11 @@ const HEARTBEAT = new mcpadc.Mcp3208()
 const CS_MCP3208 = 10
 const SPI_CHANNEL = 0
 const SPI_SPEED = 1000000
+
+const sleepData = {
+	heartBeat: 0,
+	turn: 0
+}
 
 //const util = require()
 
@@ -37,7 +43,7 @@ console.log(data)
  setInterval(SecurityRequest, 100)
  setInterval(SetServer, 1000)
  setInterval(HeartBeatInfo, 100)
-
+ setInterval(GetServerPerMinute, 60000)
 
 function TossAndTurn() {
     if(modeState == 'off')
@@ -51,6 +57,7 @@ function TossAndTurn() {
     if(prevValue != tossAndTurnData)
         Count++
     console.log('trunCount : ' +  Count)
+
 }
 
 function SecurityRequest() {
@@ -75,13 +82,26 @@ function SecurityRequest() {
 
 function HeartBeatInfo()
 {
+	let prevCount = heartbeatCount
     HEARTBEAT.readRawValue(SPI_CHANNEL, function(rawValue) {
         const value = alpha * oldValue + (1 - alpha) * rawValue;
 
-        console.log(value)
-        console.log('RAW_VALUE : ' + rawValue);
+	if(max < value)
+	{
+	max = value
+	}
+
+	if(10 < max - value)
+	{
+	heartbeatCount++
+	max = 0;
+	}
+//        console.log(value)
+       // console.log('RAW_VALUE : ' + rawValue);
         oldValue = value
     })
+	if(prevCount != heartbeatCount)
+		console.log('HeartBeatCount : ' + heartbeatCount)
 }
 
 function SetServer() {
@@ -91,4 +111,15 @@ function SetServer() {
 		console.log(modeState)
 	})
 }
+
+function GetServerPerMinute()
+{
+	sleepData.heartBeat = heartbeatCount
+	sleepData.turn = Count
+	request('put', '/sleep', sleepData)
+	heartbeatCount = 0
+	Count = 0
+       //console.log('HPM : ' + heartbeatCount)
+}
+
 ///////////////////////////////////////////////////////
