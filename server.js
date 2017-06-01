@@ -9,6 +9,7 @@ const bodyParser = require('body-parser')
 // external.init()
 
 const app = express()
+app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(express.static('view'))
 
@@ -43,6 +44,8 @@ app.post('/sleep/:onoff', (req, res) => {
 })
 
 app.put('/sleep', (req, res) => {
+  console.log(req.body)
+  res.sendStatus(200)
 })
 
 /**
@@ -59,10 +62,11 @@ app.post('/security/:onoff', (req, res) => {
 })
 
 app.put('/security', (req, res) => {
+  console.log(req.body)
+  res.sendStatus(200)
 })
 
 
 app.listen(17919, () => {
   console.log('http://localhost:17919')
 })
-
