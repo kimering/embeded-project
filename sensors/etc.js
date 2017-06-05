@@ -66,7 +66,6 @@ const button = {
 
   //function
   init() {
-
 	  gpio.pinMode( this.PIN, gpio.INPUT )
     console.log("button initated")
   },
@@ -75,20 +74,18 @@ const button = {
       const data = gpio.digitalRead( this.PIN )
       if( !data ){
         sleepMode = sleepMode=='on' ? 'off'  : 'on'
-	console.log(sleepMode)
-	securityMode = sleepMode
-	request('post', `/sleep/${sleepMode}`)
-	buzzer_pas.write()
+      	console.log(sleepMode)
+      	securityMode = sleepMode
+
+      	request('post', `/sleep/${sleepMode}`)
+      	buzzer_pas.write()
         console.log("button pushed!")
         if(sleepMode=='on'){
-	  led.on()
-	}
-	else {
-	  led.off()
-	}
-
-      }
-      else {
+      	  led.on()
+      	}
+      	else {
+      	  led.off()
+      	}
 
       }
     }, 100)
@@ -126,6 +123,54 @@ const led = {
   },
 }
 
+const light = {
+  //member variables
+  PIN: 30,
+  state: 1,
+
+  //function
+  init(){
+    gpio.pinMode( this.PIN, gpio.INPUT )
+  },
+  read() {
+    // 0: bright, 1: dark
+    const data = gpio.digitalRead( this.PIN )
+    console.log( data )
+
+    if( data != this.state ){
+      this.state = this.state==1 ? 0 : 1
+
+      if( sleepMode == 'on' ){
+        request( 'put', '/sleep', {
+          light: state ? 'dark' : 'bright',
+        })
+      }
+    }
+  }
+}
+
+const door = {
+  //member variables
+  PIN: 20,
+  state: 0,
+
+  //function
+  init() {
+    gpio.pinMode( this.PIN, gpio.INPUT )
+  },
+  read() {
+    // 0: door close, 1: door open
+    const data = gpio.digitalRead( this.PIN )
+
+    if( data != this.state ){
+      this.state = this.state==1 ? 0 : 1
+
+      request( 'put', '/security', {
+        door: state ? 'close' : 'open',
+      })
+    }
+  }
+}
 
 module.exports = {
   setModeStatus(sleep, security) {
@@ -135,7 +180,7 @@ module.exports = {
 
   init() {
     gpio.wiringPiSetup()
-  console.log(`sleepMode = ${sleepMode}`)
+    console.log(`sleepMode = ${sleepMode}`)
     fire.init()
     buzzer_pas.init()
     buzzer_act.init()
